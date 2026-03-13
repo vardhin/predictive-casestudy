@@ -1,0 +1,123 @@
+# Case Study 16: Retail Sales Time Series Analysis
+
+**22BDS0114 – GSVARDHIN**
+
+---
+
+## What is this project about?
+
+Imagine you run a business and you have records of how many customers you served
+every month for the past 12 years. You notice some patterns — summer is always
+busy, winter is slow, and overall numbers grow every year. Wouldn't it be great
+if a computer could learn those patterns and **predict next year's numbers** for
+you?
+
+That's exactly what **Time Series Analysis** does. This project takes a famous
+real-world dataset of monthly airline passenger counts from 1949 to 1960 and:
+
+1. **Explores the data** — looks at trends, seasonal patterns, and year-over-year
+   changes through charts.
+2. **Breaks the data apart** — separates the overall growth (trend), the
+   repeating seasonal ups and downs (seasonality), and the leftover random noise
+   (residual).
+3. **Checks if the data is "stable"** — a statistical test (ADF test) tells us
+   whether the average and spread stay constant over time, which most forecasting
+   models require.
+4. **Builds two forecasting models** — ARIMA and Holt-Winters — and compares
+   which one predicts better.
+5. **Forecasts the future** — uses the better model to predict passenger numbers
+   for the next 24 months.
+6. **Discusses limitations** — no model is perfect; we explain what can go wrong
+   and why predictions should be taken with a grain of salt.
+
+---
+
+## The Dataset
+
+| Detail | Value |
+|--------|-------|
+| **Name** | AirPassengers |
+| **Source** | Box & Jenkins (1976) — built into the `statsmodels` Python library |
+| **Observations** | 144 monthly data points |
+| **Period** | January 1949 – December 1960 |
+| **Unit** | Thousands of passengers |
+| **Why famous?** | It is the most widely used textbook example for time series analysis because it clearly shows an upward trend, strong seasonality, and increasing variance — all key concepts students need to learn |
+
+> **No CSV download needed.** The dataset is loaded directly from `statsmodels`,
+> so the script works out of the box.
+
+---
+
+## Key Concepts (in plain English)
+
+| Concept | What it means |
+|---------|---------------|
+| **Trend** | The general direction the numbers are heading (up, down, or flat). Here, passenger numbers grow steadily over the years. |
+| **Seasonality** | A pattern that repeats at regular intervals. Airline passengers spike every summer (July–August) and dip every winter (November–February). |
+| **Stationarity** | A fancy word for "the data's average and spread don't change over time." Most models need this, so we transform the data first. |
+| **ARIMA** | A model that uses the *relationship between a value and its own past values* (autocorrelation) to forecast. Think of it as: "if the last few months went up, the next month probably goes up too." |
+| **Holt-Winters** | A model that explicitly captures *level*, *trend*, and *seasonality*. It says: "the base is X, it's growing by Y per month, and every July it jumps by Z." |
+| **MAE / RMSE / MAPE** | Ways to measure how wrong the predictions are. Lower = better. MAPE is a percentage, so it's the easiest to understand: "on average, the prediction was off by 3%." |
+
+---
+
+## How to Run
+
+This project uses **[uv](https://docs.astral.sh/uv/)** — a fast Python package
+manager. No need to manually create virtual environments or install packages.
+
+```bash
+# 1. Clone and enter the project
+git clone <repo-url>
+cd predictive-casestudy
+
+# 2. Run the analysis (uv installs everything automatically)
+uv run main.py
+```
+
+That's it. The script will:
+- Print all analysis results to the terminal
+- Save **10 PNG charts** in the project folder
+
+---
+
+## Generated Charts
+
+| # | File | What it shows |
+|---|------|---------------|
+| 1 | `01_eda_passenger_trend.png` | The raw passenger data over 12 years |
+| 2 | `02_eda_monthly_boxplot.png` | How passenger counts are distributed for each month |
+| 3 | `03_eda_yoy_comparison.png` | Lines for each year overlaid — shows how each year is higher than the last |
+| 4 | `04_eda_rolling_stats.png` | 12-month rolling average and standard deviation — makes the trend obvious |
+| 5 | `05_decomposition.png` | The data split into Trend + Seasonal + Residual |
+| 6 | `06_acf_pacf.png` | Autocorrelation plots — helps pick ARIMA parameters |
+| 7 | `07_arima_forecast.png` | ARIMA model's predictions vs actual values |
+| 8 | `08_holtwinters_forecast.png` | Holt-Winters model's predictions vs actual values |
+| 9 | `09_model_comparison.png` | Bar chart comparing both models (MAE, RMSE, MAPE) |
+| 10 | `10_future_forecast.png` | Predicted passengers for the next 24 months |
+
+---
+
+## Project Structure
+
+```
+predictive-casestudy/
+├── main.py            # The entire analysis — one script, no notebooks
+├── pyproject.toml     # Project config & dependencies (used by uv)
+├── uv.lock            # Locked dependency versions
+├── README.md          # This file
+└── *.png              # Charts generated by running main.py
+```
+
+
+## Tech Stack
+
+| Tool | Purpose |
+|------|---------|
+| **Python 3.13** | Programming language |
+| **uv** | Package & project manager (replaces pip + venv) |
+| **pandas** | Data manipulation |
+| **numpy** | Numerical operations |
+| **matplotlib + seaborn** | Plotting |
+| **statsmodels** | ARIMA, Holt-Winters, decomposition, ADF test, dataset |
+| **scikit-learn** | Error metrics (MAE, RMSE) |
