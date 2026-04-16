@@ -8,3 +8,15 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Kaggle data (download separately into project root)
+train.csv
+test.csv
+store.csv
+
+# Cached engineered data + generated artifacts
+cache/
+outputs/
+
+# Old PNG outputs from the previous AirPassengers pipeline
+[0-9][0-9]_*.png

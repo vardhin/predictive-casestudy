@@ -1,123 +1,107 @@
-# Case Study 16: Retail Sales Time Series Analysis
+# Case Study 16 — Rossmann Store Sales Forecasting
 
-**22BDS0114 – GSVARDHIN**
+**22BDS0114 — GSVARDHIN**
 
----
-
-## What is this project about?
-
-Imagine you run a business and you have records of how many customers you served
-every month for the past 12 years. You notice some patterns — summer is always
-busy, winter is slow, and overall numbers grow every year. Wouldn't it be great
-if a computer could learn those patterns and **predict next year's numbers** for
-you?
-
-That's exactly what **Time Series Analysis** does. This project takes a famous
-real-world dataset of monthly airline passenger counts from 1949 to 1960 and:
-
-1. **Explores the data** — looks at trends, seasonal patterns, and year-over-year
-   changes through charts.
-2. **Breaks the data apart** — separates the overall growth (trend), the
-   repeating seasonal ups and downs (seasonality), and the leftover random noise
-   (residual).
-3. **Checks if the data is "stable"** — a statistical test (ADF test) tells us
-   whether the average and spread stay constant over time, which most forecasting
-   models require.
-4. **Builds two forecasting models** — ARIMA and Holt-Winters — and compares
-   which one predicts better.
-5. **Forecasts the future** — uses the better model to predict passenger numbers
-   for the next 24 months.
-6. **Discusses limitations** — no model is perfect; we explain what can go wrong
-   and why predictions should be taken with a grain of salt.
+End-to-end retail-sales forecasting on the **Rossmann Store Sales** dataset
+(Kaggle): EDA, decomposition, stationarity testing, five forecasting models,
+walk-forward evaluation, and an interactive Streamlit UI.
 
 ---
 
-## The Dataset
+## Why this case study
+
+The original AirPassengers (144 monthly points) is a textbook toy. Real retail
+forecasting is *messier* — multiple stores, daily granularity, promos,
+holidays, store-type heterogeneity, and zero-sales days when stores close.
+Rossmann gives us all of that on **1,115 stores × 942 daily observations**
+(~1M rows), so we can compare classical and ML models on a realistic problem.
+
+---
+
+## Dataset
 
 | Detail | Value |
-|--------|-------|
-| **Name** | AirPassengers |
-| **Source** | Box & Jenkins (1976) — built into the `statsmodels` Python library |
-| **Observations** | 144 monthly data points |
-| **Period** | January 1949 – December 1960 |
-| **Unit** | Thousands of passengers |
-| **Why famous?** | It is the most widely used textbook example for time series analysis because it clearly shows an upward trend, strong seasonality, and increasing variance — all key concepts students need to learn |
+|---|---|
+| Source | [Rossmann Store Sales — Kaggle](https://www.kaggle.com/c/rossmann-store-sales) |
+| Files used | `train.csv` (sales), `store.csv` (store metadata) |
+| Stores | 1,115 |
+| Daily observations | 1,017,209 rows |
+| Period | 2013-01-01 → 2015-07-31 |
+| Target | `Sales` (€) |
+| Exogenous | `Promo`, `SchoolHoliday`, `StateHoliday`, `Promo2`, `CompetitionDistance`, `StoreType`, `Assortment` |
 
-> **No CSV download needed.** The dataset is loaded directly from `statsmodels`,
-> so the script works out of the box.
-
----
-
-## Key Concepts (in plain English)
-
-| Concept | What it means |
-|---------|---------------|
-| **Trend** | The general direction the numbers are heading (up, down, or flat). Here, passenger numbers grow steadily over the years. |
-| **Seasonality** | A pattern that repeats at regular intervals. Airline passengers spike every summer (July–August) and dip every winter (November–February). |
-| **Stationarity** | A fancy word for "the data's average and spread don't change over time." Most models need this, so we transform the data first. |
-| **ARIMA** | A model that uses the *relationship between a value and its own past values* (autocorrelation) to forecast. Think of it as: "if the last few months went up, the next month probably goes up too." |
-| **Holt-Winters** | A model that explicitly captures *level*, *trend*, and *seasonality*. It says: "the base is X, it's growing by Y per month, and every July it jumps by Z." |
-| **MAE / RMSE / MAPE** | Ways to measure how wrong the predictions are. Lower = better. MAPE is a percentage, so it's the easiest to understand: "on average, the prediction was off by 3%." |
+**The CSVs are not committed.** Download from Kaggle and place `train.csv`,
+`store.csv`, (optionally `test.csv`) in the project root.
 
 ---
 
-## How to Run
-
-This project uses **[uv](https://docs.astral.sh/uv/)** — a fast Python package
-manager. No need to manually create virtual environments or install packages.
-
-```bash
-# 1. Clone and enter the project
-git clone <repo-url>
-cd predictive-casestudy
-
-# 2. Run the analysis (uv installs everything automatically)
-uv run main.py
-```
-
-That's it. The script will:
-- Print all analysis results to the terminal
-- Save **10 PNG charts** in the project folder
-
----
-
-## Generated Charts
-
-| # | File | What it shows |
-|---|------|---------------|
-| 1 | `01_eda_passenger_trend.png` | The raw passenger data over 12 years |
-| 2 | `02_eda_monthly_boxplot.png` | How passenger counts are distributed for each month |
-| 3 | `03_eda_yoy_comparison.png` | Lines for each year overlaid — shows how each year is higher than the last |
-| 4 | `04_eda_rolling_stats.png` | 12-month rolling average and standard deviation — makes the trend obvious |
-| 5 | `05_decomposition.png` | The data split into Trend + Seasonal + Residual |
-| 6 | `06_acf_pacf.png` | Autocorrelation plots — helps pick ARIMA parameters |
-| 7 | `07_arima_forecast.png` | ARIMA model's predictions vs actual values |
-| 8 | `08_holtwinters_forecast.png` | Holt-Winters model's predictions vs actual values |
-| 9 | `09_model_comparison.png` | Bar chart comparing both models (MAE, RMSE, MAPE) |
-| 10 | `10_future_forecast.png` | Predicted passengers for the next 24 months |
-
----
-
-## Project Structure
+## Architecture
 
 ```
 predictive-casestudy/
-├── main.py            # The entire analysis — one script, no notebooks
-├── pyproject.toml     # Project config & dependencies (used by uv)
-├── uv.lock            # Locked dependency versions
-├── README.md          # This file
-└── *.png              # Charts generated by running main.py
+├── main.py              # CLI: runs full headless pipeline, saves PNG/CSV to outputs/
+├── app.py               # Streamlit multi-page UI
+├── src/
+│   ├── data.py          # Load, merge, feature engineering (cached as parquet)
+│   ├── eda.py           # Plotly figures + ADF stationarity test
+│   └── models.py        # Naive, Holt-Winters, SARIMA, Prophet, XGBoost + walk-forward CV
+├── pyproject.toml
+├── train.csv  store.csv  test.csv      # (gitignored — fetched from Kaggle)
+├── cache/                              # parquet cache of engineered data
+└── outputs/                            # generated charts + leaderboard CSVs
 ```
 
+---
 
-## Tech Stack
+## Models compared
 
-| Tool | Purpose |
-|------|---------|
-| **Python 3.13** | Programming language |
-| **uv** | Package & project manager (replaces pip + venv) |
-| **pandas** | Data manipulation |
-| **numpy** | Numerical operations |
-| **matplotlib + seaborn** | Plotting |
-| **statsmodels** | ARIMA, Holt-Winters, decomposition, ADF test, dataset |
-| **scikit-learn** | Error metrics (MAE, RMSE) |
+| Model | Type | Notes |
+|---|---|---|
+| **Naive (seasonal-7)** | Baseline | `y_t = y_{t-7}` — must be beaten |
+| **Holt-Winters** | Classical ETS | Triple exponential smoothing, weekly seasonality |
+| **SARIMA(1,1,1)(1,1,1,7)** | Classical | Seasonal ARIMA on daily data |
+| **Prophet** | Decomposable | Trend + weekly + yearly + Promo/School regressors |
+| **XGBoost** | ML | Lag (1/7/14/28) + rolling stats + calendar/promo features, recursive forecast |
+
+All models share a common `fit(train) → predict(future_index)` interface in
+[src/models.py](src/models.py), so adding a new model is one class.
+
+### Metrics
+MAE · RMSE · MAPE · **RMSPE** (Rossmann competition's official metric).
+Walk-forward evaluation across `n` folds is available via
+`models.walk_forward_eval()`.
+
+---
+
+## How to run
+
+```bash
+# Install deps (uv handles venv automatically)
+uv sync
+
+# Headless analysis on the network-wide aggregate (writes to ./outputs/)
+uv run main.py
+
+# Or analyse a single store:
+uv run main.py 1 28        # store_id=1, horizon=28 days
+
+# Interactive Streamlit UI
+uv run streamlit run app.py
+```
+
+The Streamlit app has six pages — Overview, EDA, Decomposition & Stationarity,
+Forecasting, Model Comparison, Future Forecast — and a sidebar to switch
+between **Network-wide** and **Single-store** scope.
+
+---
+
+## Limitations
+
+- Holt-Winters & SARIMA assume regular sampling and can be slow on long daily
+  series — we cap CV folds and horizons accordingly.
+- XGBoost recursive forecasting compounds errors over long horizons; for >30 days
+  it loses to Holt-Winters on the network-wide series.
+- Exogenous regressors (`Promo`, `SchoolHoliday`) need to be known in advance for
+  out-of-sample prediction; we substitute day-of-week medians for the future.
+- We do not model store closures during the Rossmann refurbishment in 2014; the
+  raw zeros are filtered out by `only_open=True` in the per-store path.
