@@ -9,10 +9,7 @@ wheels/
 # Virtual environments
 .venv
 
-# Kaggle data (download separately into project root)
-train.csv
-test.csv
-store.csv
+
 
 # Cached engineered data + generated artifacts
 cache/
